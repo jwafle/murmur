@@ -1,4 +1,5 @@
 import AVFoundation
+import AudioToolbox
 import Foundation
 
 private extension AVAudioPCMBuffer {
@@ -28,6 +29,7 @@ final class AudioCaptureService {
     private var activeFrames: AVAudioFramePosition = 0
     private var tapInstalled = false
     var preRollSeconds: Double = 3
+    var inputDeviceUID = ""
     private let maximumRecordingSeconds: Double = 60
 
     var isRecording: Bool { recording != nil }
@@ -36,6 +38,26 @@ final class AudioCaptureService {
     func startListening() throws {
         guard !engine.isRunning else { return }
         let input = engine.inputNode
+        if !inputDeviceUID.isEmpty {
+            guard let deviceID = MicrophoneInput.deviceID(for: inputDeviceUID) else {
+                throw NSError(domain: "MacWisper.Audio", code: 2, userInfo: [NSLocalizedDescriptionKey: "The selected microphone is no longer available."])
+            }
+            guard let audioUnit = input.audioUnit else {
+                throw NSError(domain: "MacWisper.Audio", code: 3, userInfo: [NSLocalizedDescriptionKey: "Could not configure the selected microphone."])
+            }
+            var selectedDeviceID = deviceID
+            let status = AudioUnitSetProperty(
+                audioUnit,
+                kAudioOutputUnitProperty_CurrentDevice,
+                kAudioUnitScope_Global,
+                0,
+                &selectedDeviceID,
+                UInt32(MemoryLayout<AudioDeviceID>.size)
+            )
+            guard status == noErr else {
+                throw NSError(domain: "MacWisper.Audio", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Could not select the microphone (Core Audio error \(status))."])
+            }
+        }
         let inputFormat = input.outputFormat(forBus: 0)
         guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
             throw NSError(domain: "MacWisper.Audio", code: 1, userInfo: [NSLocalizedDescriptionKey: "No microphone input is available."])

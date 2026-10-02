@@ -7,6 +7,7 @@ struct SettingsView: View {
     @AppStorage("shortcutText") private var shortcutText = "Option + Space"
     @AppStorage("preRollSeconds") private var preRollSeconds = 3.0
     @AppStorage("historyDays") private var historyDays = 30
+    @AppStorage("microphoneInputUID") private var microphoneInputUID = ""
 
     @AppStorage("transcriptionModel") private var transcriptionModel = TranscriptionModel.all[0].id
     @AppStorage("transcriptionLanguage") private var transcriptionLanguage = "en"
@@ -51,6 +52,16 @@ struct SettingsView: View {
                 ShortcutRecorder(shortcut: $shortcutText, controller: controller)
             }
             Section("Audio") {
+                Picker("Microphone", selection: $microphoneInputUID) {
+                    Text("System Default").tag("")
+                    ForEach(controller.microphoneInputs) { input in
+                        Text(input.name).tag(input.id)
+                    }
+                    if !microphoneInputUID.isEmpty && !controller.microphoneInputs.contains(where: { $0.id == microphoneInputUID }) {
+                        Text("Unavailable Microphone").tag(microphoneInputUID)
+                    }
+                }
+                .disabled(controller.isRecording || controller.isTranscribing || controller.isPreparingModel)
                 Slider(value: $preRollSeconds, in: 1...8, step: 1) {
                     Text("Pre-roll")
                 } minimumValueLabel: { Text("1s") } maximumValueLabel: { Text("8s") }
@@ -74,6 +85,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .task { controller.refreshMicrophoneInputs() }
         .onChange(of: transcriptionModel) { _, _ in
             if !languageCodes.contains(transcriptionLanguage) { transcriptionLanguage = languageCodes.contains("en") ? "en" : languageCodes[0] }
             controller.transcriptionSettingsChanged()
@@ -82,6 +94,7 @@ struct SettingsView: View {
         .onChange(of: shortcutMode) { _, _ in controller.settingsChanged() }
         .onChange(of: shortcutText) { _, _ in controller.settingsChanged() }
         .onChange(of: preRollSeconds) { _, _ in controller.settingsChanged() }
+        .onChange(of: microphoneInputUID) { _, _ in controller.microphoneSettingsChanged() }
         .onChange(of: historyDays) { _, _ in controller.settingsChanged() }
     }
 }

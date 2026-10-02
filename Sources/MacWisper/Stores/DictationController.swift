@@ -23,6 +23,7 @@ final class DictationController {
     private(set) var playbackEntryID: UUID?
     private(set) var modelReady = false
     private(set) var modelStatus = "Choose and prepare a model in Settings."
+    private(set) var microphoneInputs: [MicrophoneInput] = []
     private let transcription = TranscriptionService()
 
     var selectedModelID: String { UserDefaults.standard.string(forKey: "transcriptionModel") ?? TranscriptionModel.all[0].id }
@@ -92,6 +93,7 @@ final class DictationController {
     func start() async {
         UserDefaults.standard.register(defaults: ["alwaysListening": true, "preRollSeconds": 3.0, "historyDays": 30, "shortcutText": "Option + Space", "shortcutMode": ShortcutMode.hold.rawValue])
         shortcut.shortcut = UserDefaults.standard.string(forKey: "shortcutText") ?? "Option + Space"
+        audio.inputDeviceUID = UserDefaults.standard.string(forKey: "microphoneInputUID") ?? ""
         shortcut.mode = ShortcutMode(rawValue: UserDefaults.standard.string(forKey: "shortcutMode") ?? "Hold to dictate") ?? .hold
         shortcut.start()
         historyStore.purge(olderThanDays: UserDefaults.standard.integer(forKey: "historyDays").nonZero(or: 30))
@@ -125,6 +127,24 @@ final class DictationController {
         let days = UserDefaults.standard.integer(forKey: "historyDays").nonZero(or: 30)
         historyStore.purge(olderThanDays: days)
         refresh()
+    }
+
+    func refreshMicrophoneInputs() {
+        microphoneInputs = MicrophoneInput.available()
+    }
+
+    func microphoneSettingsChanged() {
+        audio.inputDeviceUID = UserDefaults.standard.string(forKey: "microphoneInputUID") ?? ""
+        guard isListening, !isRecording, !isTranscribing else { return }
+        audio.stopListening()
+        do {
+            audio.preRollSeconds = UserDefaults.standard.double(forKey: "preRollSeconds")
+            try audio.startListening()
+            status = shortcut.isReady ? "Listening for \(shortcut.shortcut)" : "Enable Accessibility access to use the global shortcut."
+        } catch {
+            isListening = false
+            status = "Microphone unavailable: \(error.localizedDescription)"
+        }
     }
 
     func addDictionaryTerm(_ grapheme: String, phonemes: String) {
