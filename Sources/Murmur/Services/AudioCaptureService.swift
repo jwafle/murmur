@@ -40,10 +40,10 @@ final class AudioCaptureService {
         let input = engine.inputNode
         if !inputDeviceUID.isEmpty {
             guard let deviceID = MicrophoneInput.deviceID(for: inputDeviceUID) else {
-                throw NSError(domain: "MacWisper.Audio", code: 2, userInfo: [NSLocalizedDescriptionKey: "The selected microphone is no longer available."])
+                throw NSError(domain: "Murmur.Audio", code: 2, userInfo: [NSLocalizedDescriptionKey: "The selected microphone is no longer available."])
             }
             guard let audioUnit = input.audioUnit else {
-                throw NSError(domain: "MacWisper.Audio", code: 3, userInfo: [NSLocalizedDescriptionKey: "Could not configure the selected microphone."])
+                throw NSError(domain: "Murmur.Audio", code: 3, userInfo: [NSLocalizedDescriptionKey: "Could not configure the selected microphone."])
             }
             var selectedDeviceID = deviceID
             let status = AudioUnitSetProperty(
@@ -55,12 +55,12 @@ final class AudioCaptureService {
                 UInt32(MemoryLayout<AudioDeviceID>.size)
             )
             guard status == noErr else {
-                throw NSError(domain: "MacWisper.Audio", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Could not select the microphone (Core Audio error \(status))."])
+                throw NSError(domain: "Murmur.Audio", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Could not select the microphone (Core Audio error \(status))."])
             }
         }
         let inputFormat = input.outputFormat(forBus: 0)
         guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
-            throw NSError(domain: "MacWisper.Audio", code: 1, userInfo: [NSLocalizedDescriptionKey: "No microphone input is available."])
+            throw NSError(domain: "Murmur.Audio", code: 1, userInfo: [NSLocalizedDescriptionKey: "No microphone input is available."])
         }
         format = inputFormat
         if !tapInstalled {

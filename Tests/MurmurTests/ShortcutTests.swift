@@ -1,6 +1,6 @@
 import XCTest
 import AppKit
-@testable import MacWisper
+@testable import Murmur
 
 final class ShortcutTests: XCTestCase {
     private func event(_ code: CGKeyCode, down: Bool, flags: CGEventFlags = []) -> CGEvent {

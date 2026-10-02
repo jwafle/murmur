@@ -13,7 +13,7 @@ struct DictationView: View {
                 .foregroundStyle(controller.isRecording ? .red : .primary)
                 .frame(width: 100, height: 100)
                 .glassEffect(.regular, in: .circle)
-            Text(controller.isRecording ? "Recording" : "MacWisper")
+            Text(controller.isRecording ? "Recording" : "Murmur")
                 .font(.title2.weight(.semibold))
             Text(controller.status)
                 .font(.callout)

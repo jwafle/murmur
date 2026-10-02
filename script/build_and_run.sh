@@ -2,8 +2,8 @@
 set -euo pipefail
 
 MODE="${1:-run}"
-APP_NAME="MacWisper"
-BUNDLE_ID="com.macwisper.app"
+APP_NAME="Murmur"
+BUNDLE_ID="com.murmur.app"
 MIN_SYSTEM_VERSION="26.0"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
@@ -29,7 +29,7 @@ for ITEM in CTranscribe Headers Modules Resources; do
   ln -s "Versions/Current/$ITEM" "$FRAMEWORK/$ITEM"
 done
 mkdir -p "$APP_CONTENTS/Resources/ThirdPartyLicenses"
-cp -R "$BUILD_BIN_DIR/${APP_NAME}_MacWisper.bundle" "$APP_CONTENTS/Resources/"
+cp -R "$BUILD_BIN_DIR/${APP_NAME}_Murmur.bundle" "$APP_CONTENTS/Resources/"
 cp "$ROOT_DIR/vendor/TranscribeCpp.xcframework/LICENSE" "$APP_CONTENTS/Resources/ThirdPartyLicenses/transcribe.cpp.txt"
 cp "$ROOT_DIR/vendor/TranscribeCpp.xcframework/LICENSE.ggml" "$APP_CONTENTS/Resources/ThirdPartyLicenses/ggml.txt"
 cp "$BUILD_BINARY" "$APP_MACOS/$APP_NAME"
@@ -48,7 +48,7 @@ cat >"$APP_CONTENTS/Info.plist" <<PLIST
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>$MIN_SYSTEM_VERSION</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
-  <key>NSMicrophoneUsageDescription</key><string>MacWisper listens for dictation and keeps a short in-memory audio buffer for pre-roll.</string>
+  <key>NSMicrophoneUsageDescription</key><string>Murmur listens for dictation and keeps a short in-memory audio buffer for pre-roll.</string>
   <key>NSSpeechRecognitionUsageDescription</key><string>The optional Apple Speech model transcribes your dictation on this Mac.</string>
 </dict>
 </plist>
@@ -58,7 +58,7 @@ PLIST
 # Use a persistent Apple Development / Developer ID identity when available so
 # privacy grants survive code changes. Ad hoc local builds need a fresh grant
 # after their code changes; they must still have a valid bundle signature.
-SIGNING_IDENTITY="${MACWISPER_SIGNING_IDENTITY:--}"
+SIGNING_IDENTITY="${MURMUR_SIGNING_IDENTITY:--}"
 /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" "$APP_CONTENTS/Frameworks/CTranscribe.framework"
 /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --identifier "$BUNDLE_ID" "$APP_BUNDLE"
 /usr/bin/codesign --verify --strict "$APP_BUNDLE"

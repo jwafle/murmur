@@ -18,7 +18,7 @@ actor TranscriptionService {
 
     static var directory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("MacWisper/Models", isDirectory: true)
+            .appendingPathComponent("Murmur/Models", isDirectory: true)
     }
     static func path(for definition: TranscriptionModel) -> URL {
         directory.appendingPathComponent(definition.filename)

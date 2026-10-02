@@ -2,18 +2,18 @@
 import PackageDescription
 
 let package = Package(
-    name: "MacWisper",
+    name: "Murmur",
     platforms: [.macOS("26.0")],
-    products: [.executable(name: "MacWisper", targets: ["MacWisper"])],
+    products: [.executable(name: "Murmur", targets: ["Murmur"])],
     targets: [
         .binaryTarget(name: "CTranscribe", path: "vendor/TranscribeCpp.xcframework"),
         .executableTarget(
-            name: "MacWisper",
+            name: "Murmur",
             dependencies: ["CTranscribe"],
-            path: "Sources/MacWisper",
+            path: "Sources/Murmur",
             resources: [.copy("Resources/satisfying_click.wav")],
             linkerSettings: [.linkedFramework("Speech"), .linkedFramework("AVFoundation"), .linkedFramework("ApplicationServices")]
         ),
-        .testTarget(name: "MacWisperTests", dependencies: ["MacWisper"])
+        .testTarget(name: "MurmurTests", dependencies: ["Murmur"])
     ]
 )

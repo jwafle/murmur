@@ -8,7 +8,7 @@ final class HistoryStore {
 
     init() {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("MacWisper", isDirectory: true)
+            .appendingPathComponent("Murmur", isDirectory: true)
         directory = base.appendingPathComponent("Recordings", isDirectory: true)
         indexURL = base.appendingPathComponent("history.json")
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

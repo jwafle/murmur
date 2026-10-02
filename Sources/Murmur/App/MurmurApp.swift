@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 @main
-struct MacWisperApp: App {
+struct MurmurApp: App {
     @State private var controller = DictationController()
 
     var body: some Scene {

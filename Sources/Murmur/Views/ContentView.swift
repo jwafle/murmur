@@ -23,7 +23,7 @@ struct ContentView: View {
                     .tag(destination)
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
-            .navigationTitle("MacWisper")
+            .navigationTitle("Murmur")
         } detail: {
             Group {
                 switch selection ?? .dictation {

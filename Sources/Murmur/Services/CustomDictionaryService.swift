@@ -12,7 +12,7 @@ final class CustomDictionaryService {
 
     init() {
         directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("MacWisper", isDirectory: true)
+            .appendingPathComponent("Murmur", isDirectory: true)
         termsURL = directory.appendingPathComponent("dictionary.json")
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         if let data = try? Data(contentsOf: termsURL), let decoded = try? JSONDecoder().decode([DictionaryTerm].self, from: data) {
@@ -40,7 +40,7 @@ final class CustomDictionaryService {
         let vocabularyURL = directory.appendingPathComponent("custom.vocab")
         let dataURL = directory.appendingPathComponent("custom-data.bin")
         if !modelReady || preparedLocale != locale.identifier {
-            let data = SFCustomLanguageModelData(locale: locale, identifier: "com.macwisper.user-dictionary", version: modelVersion)
+            let data = SFCustomLanguageModelData(locale: locale, identifier: "com.murmur.user-dictionary", version: modelVersion)
             for term in terms {
                 let phonemes = term.phonemes.split(whereSeparator: \.isWhitespace).map(String.init)
                 data.insert(term: SFCustomLanguageModelData.CustomPronunciation(grapheme: term.grapheme, phonemes: phonemes))

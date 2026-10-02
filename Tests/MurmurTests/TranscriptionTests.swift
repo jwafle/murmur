@@ -1,7 +1,7 @@
 import AVFoundation
 import CTranscribe
 import XCTest
-@testable import MacWisper
+@testable import Murmur
 
 final class TranscriptionTests: XCTestCase {
     func testNativeABIAndMetalBackend() {
@@ -40,9 +40,9 @@ final class TranscriptionTests: XCTestCase {
 
     // Set these paths to opt into actual Metal inference without recording a microphone.
     func testPinnedParakeetSpeechFixture() async throws {
-        guard let modelPath = ProcessInfo.processInfo.environment["MACWISPER_TEST_MODEL"],
-              let audioPath = ProcessInfo.processInfo.environment["MACWISPER_TEST_AUDIO"] else {
-            throw XCTSkip("Set MACWISPER_TEST_MODEL and MACWISPER_TEST_AUDIO for native inference.")
+        guard let modelPath = ProcessInfo.processInfo.environment["MURMUR_TEST_MODEL"],
+              let audioPath = ProcessInfo.processInfo.environment["MURMUR_TEST_AUDIO"] else {
+            throw XCTSkip("Set MURMUR_TEST_MODEL and MURMUR_TEST_AUDIO for native inference.")
         }
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("model-test-\(UUID())")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

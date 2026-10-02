@@ -1,4 +1,4 @@
-# MacWisper
+# Murmur
 
 A small native macOS dictation app built with SwiftUI, AVFoundation, and transcribe.cpp with Metal acceleration.
 
@@ -34,16 +34,16 @@ Open Settings → Transcription, choose a model and language, then click **Downl
 
 The supported GGUF models match Hex: Parakeet Unified English, Parakeet v2, Parakeet v3, Whisper large-v3-turbo, Qwen3-ASR 0.6B, SenseVoice Small, and Cohere Transcribe. Apple Speech remains available as an optional legacy backend. Language choices and automatic detection follow each model's capabilities; only Whisper accepts custom dictionary hints.
 
-Models download from Hugging Face into `~/Library/Application Support/MacWisper/Models/`. Downloads range from about 253 MB to 2.41 GB. After installation, transcription requires no network connection and audio stays on this Mac. No running Hex application or Hex checkout is required.
+Models download from Hugging Face into `~/Library/Application Support/Murmur/Models/`. Downloads range from about 253 MB to 2.41 GB. After installation, transcription requires no network connection and audio stays on this Mac. No running Hex application or Hex checkout is required.
 
-Run checks with `swift test`. For the optional real Metal inference check, set `MACWISPER_TEST_MODEL` to the pinned Parakeet Unified English GGUF file and `MACWISPER_TEST_AUDIO` to an audio file saying “The quick brown fox jumps over the lazy dog.”
+Run checks with `swift test`. For the optional real Metal inference check, set `MURMUR_TEST_MODEL` to the pinned Parakeet Unified English GGUF file and `MURMUR_TEST_AUDIO` to an audio file saying “The quick brown fox jumps over the lazy dog.”
 
 ## Local signing and permission troubleshooting
 
 The build script signs the completed app bundle and verifies its signature before launch. To use a persistent signing identity, run:
 
 ```sh
-MACWISPER_SIGNING_IDENTITY="Apple Development: Your Name (TEAMID)" ./script/build_and_run.sh
+MURMUR_SIGNING_IDENTITY="Apple Development: Your Name (TEAMID)" ./script/build_and_run.sh
 ```
 
-Use an identity actually installed in your keychain (`security find-identity -v -p codesigning`). Without one, the script uses ad hoc signing for local development. Its designated requirement is tied to the built code, so changing the binary can invalidate a previous privacy grant even if System Settings still displays an enabled entry. Refresh the MacWisper entry after rebuilding; if toggling fails, remove that entry and add `dist/MacWisper.app` again. Restart the existing bundle without rebuilding to verify the refreshed grant.
+Use an identity actually installed in your keychain (`security find-identity -v -p codesigning`). Without one, the script uses ad hoc signing for local development. Its designated requirement is tied to the built code, so changing the binary can invalidate a previous privacy grant even if System Settings still displays an enabled entry. Refresh the Murmur entry after rebuilding; if toggling fails, remove that entry and add `dist/Murmur.app` again. Restart the existing bundle without rebuilding to verify the refreshed grant.
