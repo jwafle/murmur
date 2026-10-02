@@ -5,6 +5,11 @@ set -euo pipefail
 APP_NAME="Murmur"
 BUNDLE_ID="com.murmur.app"
 MIN_SYSTEM_VERSION="26.0"
+APP_VERSION="${MURMUR_VERSION:-0.0.0}"
+if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "MURMUR_VERSION must be a numeric major.minor.patch version" >&2
+  exit 1
+fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
@@ -51,6 +56,8 @@ cat >"$APP_CONTENTS/Info.plist" <<PLIST
   <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
   <key>CFBundleName</key><string>$APP_NAME</string>
   <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>$APP_VERSION</string>
+  <key>CFBundleVersion</key><string>$APP_VERSION</string>
   <key>LSMinimumSystemVersion</key><string>$MIN_SYSTEM_VERSION</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSMicrophoneUsageDescription</key><string>Murmur listens for dictation and keeps a short in-memory audio buffer for pre-roll.</string>
@@ -64,9 +71,11 @@ PLIST
 # privacy grants survive code changes. Ad hoc local builds need a fresh grant
 # after their code changes; they must still have a valid bundle signature.
 SIGNING_IDENTITY="${MURMUR_SIGNING_IDENTITY:--}"
+# mise.toml may select a local identity; hosted CI deliberately signs ad hoc.
+if [[ "${CI:-}" == "true" ]]; then SIGNING_IDENTITY="-"; fi
 /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" "$APP_CONTENTS/Frameworks/CTranscribe.framework"
 /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --identifier "$BUNDLE_ID" "$APP_BUNDLE"
-/usr/bin/codesign --verify --strict "$APP_BUNDLE"
+/usr/bin/codesign --verify --deep --strict "$APP_BUNDLE"
 
 open_app() { /usr/bin/open -n "$APP_BUNDLE"; }
 case "$MODE" in

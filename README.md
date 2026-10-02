@@ -25,10 +25,14 @@ Download and open the latest [Murmur.dmg](https://github.com/jwafle/murmur/relea
 Or install with Homebrew (after the first tagged release is published):
 
 ```sh
+# The tap lives in this repository, not a separate homebrew-murmur repository.
+brew tap jwafle/murmur https://github.com/jwafle/murmur
 brew install --cask jwafle/murmur/murmur
 ```
 
-The app requires macOS 26 or later. Releases are built from version tags (`v1.0.0`, for example) and published as GitHub release assets. The GitHub-hosted build is ad-hoc signed; macOS may show a first-launch security prompt. The app is not notarized, so use Control-click → Open if Gatekeeper blocks it.
+To update: `brew update && brew upgrade --cask jwafle/murmur/murmur`.
+
+The distributed app requires Apple Silicon and macOS 26 or later. Releases are built from version tags (`v1.0.0`, for example) and published as GitHub release assets. The GitHub-hosted build is ad-hoc signed; macOS may show a first-launch security prompt. The app is not notarized, so use Control-click → Open if Gatekeeper blocks it.
 
 ## Build and run
 
@@ -42,7 +46,20 @@ Run the test suite with `mise run test`. To build a release app and create the d
 mise run package
 ```
 
-Mise task scripts live in `mise-tasks/`. CI runs `mise run test`; tagged releases run `mise run package` before publishing the DMG.
+Mise task scripts live in `mise-tasks/`. CI tests the app and cask updater and verifies release packaging. Tagged releases run the tests, build and verify the DMG, publish it with a SHA-256 checksum, then pin `Casks/murmur.rb` on `main` to that release's version and checksum. The binary is arm64 (the macOS runner's native architecture); the bundled transcription framework is universal.
+
+### Publishing a release
+
+After the changes are merged to `main` and CI passes:
+
+```sh
+git tag v0.0.2
+git push origin v0.0.2
+```
+
+Use numeric `vMAJOR.MINOR.PATCH` tags. The version is embedded in the app's Info.plist. The Release workflow supports a manual run for an existing tag; it checks out that tag before installing tools. Reruns reuse an already-published DMG rather than replacing it, and older releases do not downgrade the tap.
+
+The workflow uses the repository's `GITHUB_TOKEN` with `contents: write`; no separate tap or personal access token is needed. Branch rules must allow `github-actions[bot]` to push the cask update to `main` (otherwise use a PR-based tap update). Published assets are `Murmur.dmg` and `Murmur.dmg.sha256`. Release builds in CI deliberately use ad-hoc signing instead of the local identity in `mise.toml`. Developer ID signing and Apple notarization are not configured.
 
 The project is a Swift Package Manager macOS app targeting macOS 26 or later. It bundles the upstream transcribe.cpp 0.1.3 XCFramework (MIT license, with ggml license included under `vendor/TranscribeCpp.xcframework`). The build script embeds and signs the framework.
 
@@ -63,7 +80,7 @@ Run checks with `swift test`. For the optional real Metal inference check, set `
 The build script signs the completed app bundle and verifies its signature before launch. To use a persistent signing identity, run:
 
 ```sh
-MURMUR_SIGNING_IDENTITY="Apple Development: Your Name (TEAMID)" ./script/build_and_run.sh
+MURMUR_SIGNING_IDENTITY="Apple Development: Your Name (TEAMID)" ./mise-tasks/build-and-run
 ```
 
 Use an identity actually installed in your keychain (`security find-identity -v -p codesigning`). Without one, the script uses ad hoc signing for local development. Its designated requirement is tied to the built code, so changing the binary can invalidate a previous privacy grant even if System Settings still displays an enabled entry. Refresh the Murmur entry after rebuilding; if toggling fails, remove that entry and add `dist/Murmur.app` again. Restart the existing bundle without rebuilding to verify the refreshed grant.

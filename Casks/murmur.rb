@@ -7,7 +7,8 @@ cask "murmur" do
   desc "Native macOS local dictation app"
   homepage "https://github.com/jwafle/murmur"
 
-  depends_on macos: ">= : tahoe"
+  depends_on arch: :arm64
+  depends_on macos: ">= :tahoe"
 
   app "Murmur.app"
 

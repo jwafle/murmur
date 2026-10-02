@@ -89,8 +89,10 @@ struct MicrophoneInput: Identifiable, Hashable {
             kAudioDeviceTransportTypeAggregate,
             kAudioDeviceTransportTypeVirtual,
             kAudioDeviceTransportTypeAirPlay,
-            kAudioDeviceTransportTypeRemoteScreen,
-            kAudioDeviceTransportTypeRemoteStreaming
+            // macOS 27 SDK names; use their FourCC values to also build with
+            // the macOS 26 SDK used by CI.
+            UInt32(0x72736372), // 'rscr': remote screen
+            UInt32(0x72737472)  // 'rstr': remote streaming
         ].contains(transport)
     }
 
