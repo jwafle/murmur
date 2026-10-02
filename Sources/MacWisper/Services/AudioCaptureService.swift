@@ -19,6 +19,7 @@ private extension AVAudioPCMBuffer {
 @MainActor
 final class AudioCaptureService {
     var onLimitReached: (() -> Void)?
+    var onInputLevel: ((Float) -> Void)?
     private let engine = AVAudioEngine()
     private var format: AVAudioFormat?
     private var preRoll: [AVAudioPCMBuffer] = []
@@ -78,6 +79,7 @@ final class AudioCaptureService {
     }
 
     private func receive(_ buffer: AVAudioPCMBuffer) {
+        onInputLevel?(Self.level(in: buffer))
         if var active = recording {
             active.append(buffer)
             recording = active
@@ -95,5 +97,25 @@ final class AudioCaptureService {
             preRollFrames -= AVAudioFramePosition(first.frameLength)
             preRoll.removeFirst()
         }
+    }
+
+    private static func level(in buffer: AVAudioPCMBuffer) -> Float {
+        guard buffer.frameLength > 0 else { return 0.035 }
+        var sum: Float = 0
+        let count = Int(buffer.frameLength)
+        if let channels = buffer.floatChannelData {
+            let samples = channels[0]
+            for index in 0..<count { sum += samples[index] * samples[index] }
+        } else if let channels = buffer.int16ChannelData {
+            let samples = channels[0]
+            for index in 0..<count {
+                let sample = Float(samples[index]) / Float(Int16.max)
+                sum += sample * sample
+            }
+        } else {
+            return 0.08
+        }
+        let rms = sqrt(sum / Float(count))
+        return min(1, max(0.035, rms * 5))
     }
 }

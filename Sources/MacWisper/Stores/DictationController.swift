@@ -14,6 +14,13 @@ final class DictationController {
     private(set) var selectedEntry: UUID?
     private(set) var isPreparingModel = false
     private(set) var isTranscribing = false
+    private(set) var waveformSamples: [CGFloat] = []
+    private(set) var playbackSamples: [CGFloat] = []
+    private(set) var isPlaying = false
+    private(set) var playbackProgress: Double = 0
+    private(set) var playbackTime: TimeInterval = 0
+    private(set) var playbackDuration: TimeInterval = 0
+    private(set) var playbackEntryID: UUID?
     private(set) var modelReady = false
     private(set) var modelStatus = "Choose and prepare a model in Settings."
     private let transcription = TranscriptionService()
@@ -64,10 +71,16 @@ final class DictationController {
     private var recognizer: SFSpeechRecognizer?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var audioPlayer: AVAudioPlayer?
+    private var playbackTimer: Timer?
 
     init() {
         refresh()
         audio.onLimitReached = { [weak self] in self?.stopDictation() }
+        audio.onInputLevel = { [weak self] level in
+            guard let self else { return }
+            self.waveformSamples.append(CGFloat(level))
+            if self.waveformSamples.count > 96 { self.waveformSamples.removeFirst(self.waveformSamples.count - 96) }
+        }
         shortcut.onReadinessChanged = { [weak self] ready in
             guard let self, !self.isRecording, !self.isTranscribing, self.isListening else { return }
             self.status = ready ? "Listening for \(self.shortcut.shortcut)" : "Enable Accessibility access to use the global shortcut."
@@ -131,14 +144,105 @@ final class DictationController {
 
     func select(_ entry: DictationEntry) { selectedEntry = entry.id }
 
+    func preparePlayback(_ entry: DictationEntry) {
+        guard playbackEntryID != entry.id else { return }
+        let url = historyStore.directory.appendingPathComponent(entry.audioFileName)
+        do {
+            playbackTimer?.invalidate()
+            playbackTimer = nil
+            audioPlayer?.stop()
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            playbackSamples = Self.waveform(for: url)
+            playbackEntryID = entry.id
+            playbackDuration = audioPlayer?.duration ?? 0
+            playbackTime = 0
+            playbackProgress = 0
+            isPlaying = false
+        } catch {
+            audioPlayer = nil
+            playbackSamples = []
+            playbackEntryID = entry.id
+            playbackDuration = 0
+            status = "Could not load recording: \(error.localizedDescription)"
+        }
+    }
+
     func play(_ entry: DictationEntry) {
         let url = historyStore.directory.appendingPathComponent(entry.audioFileName)
         do {
+            if playbackEntryID != entry.id || audioPlayer == nil {
+                if isPlaying { audioPlayer?.stop() }
+                isPlaying = false
+                preparePlayback(entry)
+            }
+            if isPlaying, playbackEntryID == entry.id {
+                audioPlayer?.pause()
+                isPlaying = false
+                playbackTimer?.invalidate()
+                return
+            }
             audioPlayer = try AVAudioPlayer(contentsOf: url)
+            if playbackDuration > 0, playbackTime >= playbackDuration { playbackTime = 0 }
+            audioPlayer?.currentTime = playbackTime
             audioPlayer?.play()
+            playbackDuration = audioPlayer?.duration ?? 0
+            isPlaying = true
+            playbackTimer?.invalidate()
+            playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { [weak self] _ in
+                Task { @MainActor [weak self] in self?.updatePlaybackProgress() }
+            }
         } catch {
+            isPlaying = false
             status = "Could not play recording: \(error.localizedDescription)"
         }
+    }
+
+    func seekPlayback(to progress: Double) {
+        let clamped = min(1, max(0, progress))
+        playbackProgress = clamped
+        playbackTime = playbackDuration * clamped
+        audioPlayer?.currentTime = playbackTime
+    }
+
+    private func updatePlaybackProgress() {
+        guard let audioPlayer else { return }
+        playbackTime = audioPlayer.currentTime
+        playbackDuration = audioPlayer.duration
+        playbackProgress = playbackDuration > 0 ? playbackTime / playbackDuration : 0
+        if !audioPlayer.isPlaying, isPlaying {
+            isPlaying = false
+            playbackTimer?.invalidate()
+            playbackTimer = nil
+        }
+    }
+
+    private static func waveform(for url: URL) -> [CGFloat] {
+        guard let file = try? AVAudioFile(forReading: url) else { return [] }
+        let chunkSize: AVAudioFrameCount = 2_048
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: chunkSize) else { return [] }
+        var levels: [CGFloat] = []
+        while true {
+            do { try file.read(into: buffer, frameCount: chunkSize) } catch { break }
+            guard buffer.frameLength > 0 else { break }
+            var sum: Float = 0
+            let count = Int(buffer.frameLength)
+            if let channels = buffer.floatChannelData {
+                let samples = channels[0]
+                for index in 0..<count { sum += samples[index] * samples[index] }
+            } else if let channels = buffer.int16ChannelData {
+                let samples = channels[0]
+                for index in 0..<count {
+                    let sample = Float(samples[index]) / Float(Int16.max)
+                    sum += sample * sample
+                }
+            } else {
+                levels.append(0.08)
+                continue
+            }
+            levels.append(CGFloat(sqrt(sum / Float(count))))
+        }
+        guard let peak = levels.max(), peak > 0 else { return levels }
+        return levels.map { max(0.06, min(1, $0 / peak)) }
     }
 
     func toggleListening(_ enabled: Bool) {

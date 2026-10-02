@@ -18,6 +18,13 @@ struct DictationView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            WaveformView(
+                samples: controller.waveformSamples,
+                color: controller.isRecording ? .orange : .gray
+            )
+            .frame(height: 54)
+            .padding(.horizontal, 20)
+            .accessibilityLabel(controller.isRecording ? "Recording waveform" : "Microphone waveform")
             if !controller.modelReady {
                 Text(controller.modelStatus).font(.caption).foregroundStyle(.secondary)
                 SettingsLink { Label("Set up transcription", systemImage: "arrow.down.circle") }
