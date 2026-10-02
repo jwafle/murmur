@@ -83,6 +83,7 @@ final class DictationController {
     private var recognizer: SFSpeechRecognizer?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var audioPlayer: AVAudioPlayer?
+    private var dictationStartPlayer: AVAudioPlayer?
     private var playbackTimer: Timer?
 
     init() {
@@ -310,8 +311,23 @@ final class DictationController {
         }
         audio.beginRecording()
         isRecording = true
+        playDictationStartSound()
         indicator.show()
         status = "Recording…"
+    }
+
+    private func playDictationStartSound() {
+        guard let soundURL = Bundle.module.url(
+            forResource: "satisfying_click",
+            withExtension: "wav"
+        ) else { return }
+        do {
+            dictationStartPlayer?.stop()
+            dictationStartPlayer = try AVAudioPlayer(contentsOf: soundURL)
+            dictationStartPlayer?.play()
+        } catch {
+            dictationStartPlayer = nil
+        }
     }
 
     private func stopDictation() {

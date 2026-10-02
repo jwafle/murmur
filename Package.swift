@@ -11,6 +11,7 @@ let package = Package(
             name: "MacWisper",
             dependencies: ["CTranscribe"],
             path: "Sources/MacWisper",
+            resources: [.copy("Resources/satisfying_click.wav")],
             linkerSettings: [.linkedFramework("Speech"), .linkedFramework("AVFoundation"), .linkedFramework("ApplicationServices")]
         ),
         .testTarget(name: "MacWisperTests", dependencies: ["MacWisper"])

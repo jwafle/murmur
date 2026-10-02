@@ -14,7 +14,8 @@ APP_MACOS="$APP_CONTENTS/MacOS"
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 cd "$ROOT_DIR"
 swift build --scratch-path "$ROOT_DIR/.build"
-BUILD_BINARY="$(swift build --scratch-path "$ROOT_DIR/.build" --show-bin-path)/$APP_NAME"
+BUILD_BIN_DIR="$(swift build --scratch-path "$ROOT_DIR/.build" --show-bin-path)"
+BUILD_BINARY="$BUILD_BIN_DIR/$APP_NAME"
 
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_MACOS" "$APP_CONTENTS/Frameworks"
@@ -28,6 +29,7 @@ for ITEM in CTranscribe Headers Modules Resources; do
   ln -s "Versions/Current/$ITEM" "$FRAMEWORK/$ITEM"
 done
 mkdir -p "$APP_CONTENTS/Resources/ThirdPartyLicenses"
+cp -R "$BUILD_BIN_DIR/${APP_NAME}_MacWisper.bundle" "$APP_CONTENTS/Resources/"
 cp "$ROOT_DIR/vendor/TranscribeCpp.xcframework/LICENSE" "$APP_CONTENTS/Resources/ThirdPartyLicenses/transcribe.cpp.txt"
 cp "$ROOT_DIR/vendor/TranscribeCpp.xcframework/LICENSE.ggml" "$APP_CONTENTS/Resources/ThirdPartyLicenses/ggml.txt"
 cp "$BUILD_BINARY" "$APP_MACOS/$APP_NAME"
