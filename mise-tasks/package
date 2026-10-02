@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# mise description="Build the release app and create dist/Murmur.dmg"
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DIST_DIR="$ROOT_DIR/dist"
+APP_NAME="Murmur"
+DMG="$DIST_DIR/Murmur.dmg"
+
+cd "$ROOT_DIR"
+"$ROOT_DIR/mise-tasks/build-and-run" --package
+mkdir -p "$DIST_DIR"
+STAGING="$(mktemp -d)"
+trap 'rm -rf "$STAGING"' EXIT
+cp -R "$DIST_DIR/$APP_NAME.app" "$STAGING/"
+ln -s /Applications "$STAGING/Applications"
+rm -f "$DMG"
+hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+echo "Created $DMG"

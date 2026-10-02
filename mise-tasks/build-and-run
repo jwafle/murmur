@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
+# mise description="Build and run Murmur (pass --package for a release build)"
 set -euo pipefail
 
-MODE="${1:-run}"
 APP_NAME="Murmur"
 BUNDLE_ID="com.murmur.app"
 MIN_SYSTEM_VERSION="26.0"
@@ -11,10 +11,15 @@ APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
 
-pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+MODE="${1:-run}"
+if [[ "$MODE" != "--package" ]]; then
+  pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+fi
 cd "$ROOT_DIR"
-swift build --scratch-path "$ROOT_DIR/.build"
-BUILD_BIN_DIR="$(swift build --scratch-path "$ROOT_DIR/.build" --show-bin-path)"
+CONFIGURATION=debug
+if [[ "$MODE" == "--package" ]]; then CONFIGURATION=release; fi
+swift build -c "$CONFIGURATION" --scratch-path "$ROOT_DIR/.build"
+BUILD_BIN_DIR="$(swift build -c "$CONFIGURATION" --scratch-path "$ROOT_DIR/.build" --show-bin-path)"
 BUILD_BINARY="$BUILD_BIN_DIR/$APP_NAME"
 
 rm -rf "$APP_BUNDLE"
@@ -65,6 +70,7 @@ SIGNING_IDENTITY="${MURMUR_SIGNING_IDENTITY:--}"
 
 open_app() { /usr/bin/open -n "$APP_BUNDLE"; }
 case "$MODE" in
+  --package) ;;
   run) open_app ;;
   --debug|debug) lldb -- "$APP_MACOS/$APP_NAME" ;;
   --logs|logs)

@@ -18,11 +18,31 @@ The first run requests Microphone access. Speech Recognition access is requested
 
 The always-ready mode records a rolling in-memory pre-roll, discarding older buffers as they expire. When dictation is not active, it does not write audio to disk or submit audio for transcription. Dictation is capped at 60 seconds per clip. Audio is averaged to mono and resampled to 16 kHz for local inference; models with shorter input limits are processed in chunks.
 
+## Install
+
+Download and open the latest [Murmur.dmg](https://github.com/jwafle/murmur/releases/latest/download/Murmur.dmg), then drag Murmur to Applications.
+
+Or install with Homebrew (after the first tagged release is published):
+
+```sh
+brew install --cask jwafle/murmur/murmur
+```
+
+The app requires macOS 26 or later. Releases are built from version tags (`v1.0.0`, for example) and published as GitHub release assets. The GitHub-hosted build is ad-hoc signed; macOS may show a first-launch security prompt. The app is not notarized, so use Control-click → Open if Gatekeeper blocks it.
+
 ## Build and run
 
 ```sh
-./script/build_and_run.sh
+mise run build-and-run
 ```
+
+Run the test suite with `mise run test`. To build a release app and create the drag-and-drop disk image locally:
+
+```sh
+mise run package
+```
+
+Mise task scripts live in `mise-tasks/`. CI runs `mise run test`; tagged releases run `mise run package` before publishing the DMG.
 
 The project is a Swift Package Manager macOS app targeting macOS 26 or later. It bundles the upstream transcribe.cpp 0.1.3 XCFramework (MIT license, with ggml license included under `vendor/TranscribeCpp.xcframework`). The build script embeds and signs the framework.
 
