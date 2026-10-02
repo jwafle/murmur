@@ -20,7 +20,7 @@ private extension AVAudioPCMBuffer {
 @MainActor
 final class AudioCaptureService {
     var onLimitReached: (() -> Void)?
-    var onInputLevel: ((Float) -> Void)?
+    var onInputLevel: ((Float, TimeInterval) -> Void)?
     private let engine = AVAudioEngine()
     private var format: AVAudioFormat?
     private var preRoll: [AVAudioPCMBuffer] = []
@@ -101,7 +101,8 @@ final class AudioCaptureService {
     }
 
     private func receive(_ buffer: AVAudioPCMBuffer) {
-        onInputLevel?(Self.level(in: buffer))
+        let duration = format.map { Double(buffer.frameLength) / $0.sampleRate } ?? 0
+        onInputLevel?(Self.level(in: buffer), duration)
         if var active = recording {
             active.append(buffer)
             recording = active

@@ -4,6 +4,7 @@ struct DictationView: View {
     let controller: DictationController
     @AppStorage("shortcutText") private var shortcutText = "Option + Space"
     @AppStorage("alwaysListening") private var alwaysListening = true
+    @AppStorage("preRollSeconds") private var preRollSeconds = 3.0
 
     var body: some View {
         VStack(spacing: 20) {
@@ -19,7 +20,7 @@ struct DictationView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             WaveformView(
-                samples: controller.waveformSamples,
+                samples: controller.waveformSamples(for: preRollSeconds),
                 color: controller.isRecording ? .orange : .gray
             )
             .frame(height: 54)

@@ -14,7 +14,7 @@ final class DictationController {
     private(set) var selectedEntry: UUID?
     private(set) var isPreparingModel = false
     private(set) var isTranscribing = false
-    private(set) var waveformSamples: [CGFloat] = []
+    private var waveformHistory: [(level: CGFloat, duration: TimeInterval)] = []
     private(set) var playbackSamples: [CGFloat] = []
     private(set) var isPlaying = false
     private(set) var playbackProgress: Double = 0
@@ -28,6 +28,17 @@ final class DictationController {
 
     var selectedModelID: String { UserDefaults.standard.string(forKey: "transcriptionModel") ?? TranscriptionModel.all[0].id }
     var selectedLanguage: String { UserDefaults.standard.string(forKey: "transcriptionLanguage") ?? "en" }
+
+    func waveformSamples(for duration: TimeInterval) -> [CGFloat] {
+        var samples: [CGFloat] = []
+        var visibleDuration: TimeInterval = 0
+        for reading in waveformHistory.reversed() {
+            guard visibleDuration < duration else { break }
+            samples.append(CGFloat(reading.level))
+            visibleDuration += reading.duration
+        }
+        return Array(samples.reversed())
+    }
 
     func prepareSelectedModel(download: Bool = true) async {
         guard !isPreparingModel, !isRecording, !isTranscribing else { return }
@@ -77,10 +88,13 @@ final class DictationController {
     init() {
         refresh()
         audio.onLimitReached = { [weak self] in self?.stopDictation() }
-        audio.onInputLevel = { [weak self] level in
+        audio.onInputLevel = { [weak self] level, duration in
             guard let self else { return }
-            self.waveformSamples.append(CGFloat(level))
-            if self.waveformSamples.count > 96 { self.waveformSamples.removeFirst(self.waveformSamples.count - 96) }
+            self.waveformHistory.append((CGFloat(level), duration))
+            var retainedDuration = self.waveformHistory.reduce(0) { $0 + $1.duration }
+            while retainedDuration > 8, !self.waveformHistory.isEmpty {
+                retainedDuration -= self.waveformHistory.removeFirst().duration
+            }
         }
         shortcut.onReadinessChanged = { [weak self] ready in
             guard let self, !self.isRecording, !self.isTranscribing, self.isListening else { return }
