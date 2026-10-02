@@ -1,8 +1,8 @@
 cask "murmur" do
-  version :latest
-  sha256 :no_check
+  version "0.0.2"
+  sha256 "ca05215570524157e702ac28045201700ea88f17c9a0f764be3504b48f0fb98a"
 
-  url "https://github.com/jwafle/murmur/releases/latest/download/Murmur.dmg"
+  url "https://github.com/jwafle/murmur/releases/download/v#{version}/Murmur.dmg"
   name "Murmur"
   desc "Native macOS local dictation app"
   homepage "https://github.com/jwafle/murmur"
